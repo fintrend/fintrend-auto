@@ -1,39 +1,38 @@
 name: Test WP API
 
 on:
-  workflow_dispatch: {}   # ボタンで手動実行できる
+  workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # これを追加：必要なライブラリをインストール
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-      - name: Sanity check (users/me)
+      - name: Sanity check (GET posts)
         env:
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USERNAME: ${{ secrets.WP_USERNAME }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
         run: |
           python - <<'PY'
-          import os, requests, base64
+          import os, base64, requests
           base = os.environ["WP_BASE_URL"].rstrip("/")
           u = os.environ["WP_USERNAME"]
           p = os.environ["WP_APP_PASSWORD"]
           pair = base64.b64encode(f"{u}:{p}".encode("ascii")).decode()
-          h = {"Authorization": f"Basic {pair}"}
-          url = base + "/wp-json/wp/v2/users/me"
-          r = requests.get(url, headers=h, timeout=20)
+          headers = {
+              "Authorization": f"Basic {pair}",
+              "Accept": "application/json",
+              "User-Agent": "fintrend-actions/1.0 (+https://www.fintrend.jp)"
+          }
+          url = base + "/wp-json/wp/v2/posts?per_page=1"
+          r = requests.get(url, headers=headers, timeout=20)
           print("URL:", url)
           print("status:", r.status_code)
-          print("body:", r.text[:600])
+          print("body:", r.text[:800])
+          r.raise_for_status()
           PY
