@@ -1,0 +1,34 @@
+name: Test WP API
+
+on:
+  workflow_dispatch: {}   # ボタンで手動実行できる
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sanity check (users/me)
+        env:
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import os, requests, base64
+          base = os.environ["WP_BASE_URL"].rstrip("/")
+          u = os.environ["WP_USERNAME"]
+          p = os.environ["WP_APP_PASSWORD"]
+          pair = base64.b64encode(f"{u}:{p}".encode("ascii")).decode()
+          h = {"Authorization": f"Basic {pair}"}
+          url = base + "/wp-json/wp/v2/users/me"
+          r = requests.get(url, headers=h, timeout=20)
+          print("URL:", url)
+          print("status:", r.status_code)
+          print("body:", r.text[:600])
+          PY
+          
