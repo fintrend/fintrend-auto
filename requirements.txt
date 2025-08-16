@@ -1,0 +1,6 @@
+requests
+python-dotenv
+yfinance
+matplotlib
+pandas
+openai>=1.30.0

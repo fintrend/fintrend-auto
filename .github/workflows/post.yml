@@ -1,0 +1,58 @@
+name: Auto Post to WordPress
+
+on:
+  schedule:
+    # JST 7:00  → 前日 22:00 UTC
+    - cron: '0 22 * * *'
+    # JST 8:00  → 前日 23:00 UTC
+    - cron: '0 23 * * *'
+    # JST 9:00  → 0:00 UTC
+    - cron: '0 0 * * *'
+    # JST 11:00 → 2:00 UTC
+    - cron: '0 2 * * *'
+    # JST 13:00 → 4:00 UTC
+    - cron: '0 4 * * *'
+    # JST 15:00 → 6:00 UTC
+    - cron: '0 6 * * *'
+    # JST 17:00 → 8:00 UTC
+    - cron: '0 8 * * *'
+    # JST 19:00 → 10:00 UTC
+    - cron: '0 10 * * *'
+    # JST 21:00 → 12:00 UTC
+    - cron: '0 12 * * *'
+    # JST 22:30 → 13:30 UTC（分を 30 に）
+    - cron: '30 13 * * *'
+  workflow_dispatch: {}   # 手動実行ボタンも出す
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run poster
+        env:
+          # ← ここに GitHub Secrets を割り当てます（後で登録）
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_API_ENDPOINT: ${{ secrets.WP_API_ENDPOINT }}
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_CATEGORY_ID: ${{ secrets.WP_CATEGORY_ID }}
+          POST_STATUS: ${{ secrets.POST_STATUS }}
+          # 画像生成の ON/OFF（OpenAI 画像が未承認なら 0）
+          OPENAI_IMAGE_ENABLED: ${{ secrets.OPENAI_IMAGE_ENABLED }}
+        run: |
+          python auto_blog_poster.py
