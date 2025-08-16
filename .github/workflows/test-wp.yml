@@ -1,22 +1,4 @@
-name: Test WP API
-
-on:
-  workflow_dispatch:
-
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      # ←このブロックを追加
-      - name: Install deps
-        run: python -m pip install --upgrade pip requests
-
-      - name: Sanity check (GET posts)
+      - name: Sanity check (GET posts with auth)
         env:
           WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
           WP_USERNAME: ${{ secrets.WP_USERNAME }}
@@ -27,13 +9,17 @@ jobs:
           base = os.environ["WP_BASE_URL"].rstrip("/")
           u = os.environ["WP_USERNAME"]
           p = os.environ["WP_APP_PASSWORD"]
+
+          # Basic 認証（アプリケーションパスワード）
           pair = base64.b64encode(f"{u}:{p}".encode("ascii")).decode()
           headers = {
               "Authorization": f"Basic {pair}",
               "Accept": "application/json",
               "User-Agent": "fintrend-actions/1.0 (+https://www.fintrend.jp)"
           }
-          url = base + "/wp-json/wp/v2/posts?per_page=1"
+
+          # 認証者視点で取得（context=edit）
+          url = base + "/wp-json/wp/v2/posts?per_page=1&context=edit"
           r = requests.get(url, headers=headers, timeout=20)
           print("URL:", url)
           print("status:", r.status_code)
